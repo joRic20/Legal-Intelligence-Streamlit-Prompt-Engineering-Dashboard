@@ -1,0 +1,48 @@
+ipykernel
+azure-storage-blob>=12.8.1
+pandas>=1.5.0
+polars
+gensim
+spacy
+transformers
+nltk
+wordcloud
+matplotlib
+seaborn
+polars
+pyarrow
+torch
+accelerate
+huggingface_hub
+python-dotenv
+openai
+streamlit
+plotly
+scikit-learn
+tabulate
+reportlab
+
+# Core dependencies for AI Legal Intelligence Platform
+streamlit
+pandas
+plotly
+openai
+
+# Document processing
+PyPDF2
+pdfplumber
+PyMuPDF
+python-docx
+
+# Data handling
+pyarrow
+numpy
+
+# Optional: Vector search (comment out if not needed)
+faiss-cpu
+
+# Development tools (optional)
+pip-tools
+black
+flake8
+pytest

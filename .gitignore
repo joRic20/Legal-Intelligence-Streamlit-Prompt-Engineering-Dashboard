@@ -1,0 +1,14 @@
+.venv
+settings.py
+legal_data_report.txt
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+*.log
+*.csv
+*.xlsx
+*.json
+*.xml
