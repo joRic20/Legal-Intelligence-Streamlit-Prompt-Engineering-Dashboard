@@ -4,87 +4,140 @@ A comprehensive AI-powered system for legal document analysis, compliance assess
 
 ## Overview
 
-The Legal Intelligence Platform is an advanced AI-driven solution designed to streamline legal and regulatory information processing. Built specifically for legal professionals, the platform leverages Azure OpenAI services and sophisticated natural language processing to provide intelligent document analysis, compliance assessment, and regulatory tracking capabilities.
+The Legal Intelligence Platform is an advanced AI-driven solution designed to streamline legal and regulatory information processing. Built specifically for legal professionals, the platform leverages OpenAI services and sophisticated natural language processing to provide intelligent document analysis, compliance assessment, and regulatory tracking capabilities.
 
-## Dashboard Preview
+## Platform Dashboard
 
-![Legal Intelligence Dashboard](https://github.com/joRic20/Legal-Intelligence-Streamlit-Prompt-Engineering-Dashboard/blob/main/dashboard%20screenshot.jpeg?raw=true)
-*AI-powered legal intelligence dashboard with document analysis, compliance tracking, and regulatory monitoring capabilities*
+<div align="center">
+  <img src="https://github.com/joRic20/Legal-Intelligence-Streamlit-Prompt-Engineering-Dashboard/blob/main/homepage.png?raw=true" alt="Legal Intelligence Platform - Main Dashboard" width="100%"/>
+  <br><em>🏠 Modern AI-powered legal intelligence dashboard with professional design and intuitive navigation</em>
+</div>
+
+<br>
+
+<div align="center">
+  <img src="https://github.com/joRic20/Legal-Intelligence-Streamlit-Prompt-Engineering-Dashboard/blob/main/homepage1.png?raw=true" alt="Legal Intelligence Platform - Dashboard Features" width="100%"/>
+  <br><em>📊 Advanced dashboard showing dataset statistics, AI processing status, and filtering capabilities</em>
+</div>
+
+## Feature Gallery
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="https://github.com/joRic20/Legal-Intelligence-Streamlit-Prompt-Engineering-Dashboard/blob/main/documentbrowser.png?raw=true" alt="Document Browser & AI Search" width="100%"/>
+      <h3>📄 Document Browser & AI Search</h3>
+      <p><strong>Intelligent Semantic Search</strong><br>
+      AI-powered search that understands legal context and intent with relevance scoring, document summaries, and automated classification</p>
+      <ul align="left">
+        <li>Semantic search with confidence indicators</li>
+        <li>Document type identification</li>
+        <li>Executive summary generation</li>
+        <li>Key legal points extraction</li>
+      </ul>
+    </td>
+    <td width="50%" align="center">
+      <img src="https://github.com/joRic20/Legal-Intelligence-Streamlit-Prompt-Engineering-Dashboard/blob/main/compliance.png?raw=true" alt="Compliance Intelligence System" width="100%"/>
+      <h3>⚖️ Compliance Intelligence</h3>
+      <p><strong>Sector-Specific Analysis</strong><br>
+      Tailored compliance impact assessment across multiple business sectors with automated risk analysis and requirement extraction</p>
+      <ul align="left">
+        <li>Multi-sector compliance mapping</li>
+        <li>Risk level assessment (High/Medium/Low)</li>
+        <li>Deadline identification</li>
+        <li>Implementation complexity analysis</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">
+      <img src="https://github.com/joRic20/Legal-Intelligence-Streamlit-Prompt-Engineering-Dashboard/blob/main/tracker.png?raw=true" alt="Regulatory Tracking & Analytics" width="100%"/>
+      <h3>📊 Regulatory Tracking & Evolution Monitoring</h3>
+      <p><strong>Comprehensive Regulatory Analysis</strong><br>
+      Track specific regulations across the entire document corpus with interactive timeline visualizations, statistical analysis, and trend monitoring</p>
+      <div align="left" style="max-width: 800px; margin: 0 auto;">
+        <ul>
+          <li><strong>Evolution Monitoring:</strong> Track regulatory changes across thousands of documents</li>
+          <li><strong>Timeline Visualizations:</strong> Interactive charts showing regulatory development over time</li>
+          <li><strong>Relationship Classification:</strong> Identify direct mentions, implementations, and amendments</li>
+          <li><strong>Statistical Analysis:</strong> Coverage percentages, importance distribution, and trend analysis</li>
+          <li><strong>Export Capabilities:</strong> Comprehensive reports and CSV data export</li>
+        </ul>
+      </div>
+    </td>
+  </tr>
+</table>
 
 ## Key Features
 
-### Advanced Document Processing
-- **Automated PDF Processing**: Processes over 3,000 EuroLex legal documents with hierarchical organization
-- **Multi-Stage NLP Pipeline**: Advanced text preprocessing including punctuation removal, stopword filtering, stemming, and BERT tokenization
+### 🤖 Advanced AI Processing
+- **Automated Document Analysis**: Process 3,000+ EuroLex legal documents with hierarchical organization
+- **Multi-Stage NLP Pipeline**: Advanced text preprocessing with BERT tokenization and semantic understanding
 - **AI Document Classification**: Automated document type identification and legal domain categorization
+- **Confidence Scoring**: All AI outputs include reliability indicators for professional decision-making
 
-### Intelligent Search and Analysis
-- **Semantic Search**: AI-powered search that understands legal context and intent
-- **Relevance Scoring**: Advanced relevance assessment with confidence indicators
+### 🔍 Intelligent Search & Analysis
+- **Semantic Search**: AI-powered search understanding legal context and intent beyond keyword matching
+- **Relevance Scoring**: Advanced relevance assessment with confidence indicators and explanation
 - **Document Summarization**: Automated generation of executive summaries and key legal points
-- **Structure Analysis**: Extraction of document sections, articles, and legal framework
+- **Structure Analysis**: Extraction of document sections, articles, and legal framework components
 
-### Compliance Intelligence
-- **Sector-Specific Analysis**: Tailored compliance impact assessment across multiple business sectors
+### ⚖️ Compliance Intelligence
+- **Sector-Specific Analysis**: Tailored compliance impact assessment across Financial Services, Data Protection, Environmental, Digital Markets, Healthcare, Energy, Transportation, Manufacturing, and Telecommunications
 - **Risk Assessment**: Automated identification of compliance requirements, deadlines, and penalties
 - **Implementation Complexity**: Assessment of effort and resources required for compliance
 - **Cross-Sector Requirements**: Identification of regulations affecting multiple business areas
 
-### Regulatory Tracking
-- **Evolution Monitoring**: Track specific regulations across the entire document corpus
-- **Temporal Analysis**: Chronological tracking with interactive timeline visualizations
-- **Relationship Classification**: Identification of document relationships to regulations
-- **Trend Analysis**: Statistical analysis of regulatory changes over time
+### 📊 Regulatory Tracking
+- **Evolution Monitoring**: Track specific regulations across entire document corpus with comprehensive analysis
+- **Temporal Analysis**: Chronological tracking with interactive timeline visualizations and statistical insights
+- **Relationship Classification**: Identification of document relationships (Direct mentions, Implementations, Amendments, Related topics)
+- **Trend Analysis**: Year-over-year regulatory activity analysis with importance distribution metrics
 
 ## Technical Architecture
 
-### Core Components
-
-**Data Processing Layer**
-- Custom PDF text extraction utilities
-- Parquet-based storage with Snappy compression for 70-90% size reduction
-- Hierarchical document organization by publication date
-- Comprehensive metadata extraction and validation
-
-**AI Analysis Layer**
-- Azure OpenAI GPT-4o-mini integration
-- Specialized prompt engineering for legal document analysis
-- Multiple focused AI analysis modules:
-  - Document summarization and classification
-  - Compliance requirement extraction
-  - Regulatory relationship tracking
-  - Semantic search and relevance scoring
-
-**Application Layer**
-- Streamlit-based web interface with professional styling
-- Real-time AI analysis with progress tracking
-- Interactive visualizations using Plotly
-- Comprehensive export capabilities for reports and data
-
-### Technology Stack
-
+### Core Technology Stack
 - **Backend**: Python 3.8+, Pandas, NLTK, Gensim
-- **AI/ML**: Azure OpenAI API, BERT tokenization, Custom NLP pipelines
-- **Frontend**: Streamlit with professional UI components
-- **Data Storage**: Parquet files with PyArrow engine optimization
+- **AI/ML**: OpenAI GPT-4o-mini, BERT tokenization, Custom NLP pipelines
+- **Frontend**: Streamlit with modern professional UI components and responsive design
+- **Data Storage**: Optimized Parquet files with PyArrow engine (70-90% compression)
 - **Visualization**: Plotly for interactive charts, timelines, and analytics
-- **Authentication**: Azure OpenAI credential management
+- **Authentication**: Secure OpenAI API credential management
+
+### Data Processing Pipeline
+
+**Stage 1: Document Ingestion**
+- **Source**: 3,000+ EuroLex legal documents in PDF format
+- **Processing**: Recursive directory traversal and intelligent text extraction
+- **Output**: Structured DataFrame with comprehensive metadata and full text content (eurolex_consolidated.parquet)
+- **Storage**: Compressed Parquet format for optimal query performance
+
+**Stage 2: Advanced NLP Preprocessing**
+- **Text Cleaning**: Punctuation removal and case normalization
+- **Advanced Filtering**: Custom stopword removal preserving legal negations
+- **Normalization**: Stemming for consistent word forms and legal terminology
+- **Tokenization**: BERT-compatible tokenization for transformer model integration
+
+**Stage 3: AI Analysis Pipeline**
+- **Document Classification**: Automated type identification and purpose extraction
+- **Content Analysis**: Legal domain identification and key point extraction
+- **Compliance Mapping**: Requirement extraction and sector impact analysis
+- **Relationship Detection**: Cross-document regulatory relationship identification
 
 ## Installation and Setup
 
 ### Prerequisites
-
 - Python 3.8 or higher
-- Azure OpenAI API access with GPT-4o-mini model
+- OpenAI API access with GPT-4o-mini model
 - Minimum 8GB RAM for large document processing
 - Required Python packages listed in requirements.txt
 
-### Environment Configuration
+### Quick Start
 
 1. **Clone the repository**
    ```bash
-   git clone [repository-url]
-   cd legal-intelligence-platform
+   git clone https://github.com/joRic20/Legal-Intelligence-Streamlit-Prompt-Engineering-Dashboard.git
+   cd Legal-Intelligence-Streamlit-Prompt-Engineering-Dashboard
    ```
 
 2. **Install dependencies**
@@ -92,257 +145,168 @@ The Legal Intelligence Platform is an advanced AI-driven solution designed to st
    pip install -r requirements.txt
    ```
 
-3. **Configure Azure OpenAI credentials**
+3. **Configure API credentials**
    
    Create a `settings.py` file:
    ```python
-   # Azure OpenAI Configuration
-   AZURE_API_KEY = "your_api_key_here"
-   AZURE_OPENAI_ENDPOINT = "https://your-resource.openai.azure.com/"
-   AZURE_OPENAI_API_VERSION = "2024-02-15-preview"
-   
-   # Data Configuration
-   CONTAINER_NAME = "legal-documents"
-   PARQUET_FILE_PATH = "eurolex_consolidated.parquet"
+   # OpenAI Configuration
+   OPEN_API_KEY = "your_openai_api_key_here"
    ```
 
-4. **Verify dataset availability**
-   
-   Ensure the processed legal document dataset is available at the specified path.
+4. **Launch the application**
+   ```bash
+   streamlit run app.py
+   ```
 
-### Application Launch
+   Access at `http://localhost:8501`
 
-```bash
-streamlit run app.py
-```
+### Additional Resources
 
-The application will be available at `http://localhost:8501`
+- **Jupyter Notebook**: `gpt_info_extractor - richard.ipynb` contains GPT analysis experiments and prompt engineering examples
+- **Prompt Documentation**: `prompts.md` provides detailed information about AI prompt engineering strategies
+- **Sample Data**: `legal_data_sample.csv` and `legal_data_report.txt` contain analysis examples and data insights
+- **Testing**: `test.py` includes utility functions for testing and validation
 
 ## Usage Guide
 
-### Document Browser and Search
+### 📄 Document Browser and Search
 
-**Semantic Search**
-1. Navigate to the "Document Browser & Search" tab
-2. Enter search terms (e.g., "data protection", "GDPR", "financial services")
-3. AI analyzes semantic relevance across all documents
-4. View results with relevance scores and explanations
+**AI-Powered Semantic Search**
+1. Navigate to "Document Browser & Search" tab
+2. Enter search terms (e.g., "data protection", "GDPR", "financial services", "competition law")
+3. AI analyzes semantic relevance across all documents with confidence scoring
+4. View results with detailed relevance explanations and matching concepts
 
-**Display Options**
-- **Summary Cards**: Quick overview with key points and metadata
-- **Detailed Analysis**: Comprehensive AI analysis with full document structure
+**Analysis Modes**
+- **Summary Cards**: Quick overview with key points, document type, and metadata
+- **Detailed Analysis**: Comprehensive AI analysis with legal framework, compliance requirements, and full document structure
 
-**Export Capabilities**
-- Download individual documents as text files
-- Export analysis summaries and reports
-- Save search results for further analysis
-
-### Compliance Intelligence
+### ⚖️ Compliance Intelligence
 
 **Client Assessment Workflow**
-1. Access the "Compliance Intelligence" tab
-2. Enter company/client name and relevant business sectors
+1. Access "Compliance Intelligence" tab
+2. Enter company/client name and select relevant business sectors
 3. AI analyzes documents for sector-specific compliance requirements
-4. Review detailed impact assessments by sector
+4. Review detailed impact assessments with actionable insights
 
 **Analysis Features**
-- **Impact Level Assessment**: High, Medium, Low impact classification
-- **Specific Requirements**: Extraction of actionable compliance items
-- **Deadline Identification**: Automatic detection of compliance deadlines
-- **Implementation Complexity**: Assessment of required effort and resources
+- **Impact Level Assessment**: High, Medium, Low classification with detailed reasoning
+- **Specific Requirements**: Extraction of actionable compliance items with deadline identification
+- **Implementation Complexity**: Assessment of required effort, resources, and complexity factors
+- **Cross-Sector Analysis**: Identification of requirements affecting multiple business areas
 
-**Reporting**
-- Download compliance summaries for client communications
-- Export full publications with highlighted relevant sections
-- Generate comprehensive compliance reports
-
-### Regulatory Tracking
+### 📊 Regulatory Tracking
 
 **Comprehensive Tracking Process**
-1. Navigate to the "Regulatory Tracking" tab
-2. Enter regulation or topic to track (e.g., "AI Act", "Sustainability Reporting")
-3. Set relevance threshold and sorting preferences
-4. AI analyzes evolution across entire document corpus
+1. Navigate to "Regulatory Tracking" tab
+2. Enter regulation or topic (e.g., "AI Act", "GDPR", "Sustainability Reporting", "Data Protection")
+3. Set relevance threshold and sorting preferences (Date, Relevance, Importance)
+4. AI analyzes evolution across entire document corpus with progress tracking
 
-**Analysis Capabilities**
-- **Timeline Visualization**: Interactive charts showing regulatory evolution
-- **Relationship Classification**: Direct mentions, implementations, amendments
-- **Statistical Analysis**: Coverage percentages and importance distribution
-- **Temporal Distribution**: Year-over-year regulatory activity
-
-**Advanced Features**
-- **Batch Processing**: Analyze thousands of documents efficiently
-- **Progress Tracking**: Real-time analysis progress with estimated completion
-- **Filtering Options**: Filter by relationship type and importance level
-- **Pagination**: Handle large result sets with organized pagination
-
-## Project Structure
-
-```
-legal-intelligence-platform/
-├── src/
-│   ├── utilities/
-│   │   ├── load_pdfs_to_parquet.py         # PDF processing utilities
-│   │   └── preprocessing_parquet.py        # NLP preprocessing classes
-│   └── resources/
-│       └── eurolex_consolidated.parquet    # Processed document dataset
-├── app.py                                  # Main Streamlit application
-├── settings.py                             # Configuration settings
-├── requirements.txt                        # Python dependencies
-├── dashboard screenshot.jpeg               # Dashboard preview image
-├── paste.txt                              # Project documentation
-└── README.md                              # This file
-```
-
-## Data Processing Pipeline
-
-### Stage 1: Document Ingestion
-- **Source**: EuroLex legal documents in PDF format
-- **Processing**: Recursive directory traversal and text extraction
-- **Output**: Structured DataFrame with metadata and full text content
-- **Storage**: Compressed Parquet format for optimal performance
-
-### Stage 2: NLP Preprocessing
-- **Text Cleaning**: Punctuation removal and case normalization
-- **Advanced Filtering**: Custom stopword removal preserving legal negations
-- **Normalization**: Stemming for consistent word forms
-- **Tokenization**: BERT-compatible tokenization for transformer models
-
-### Stage 3: AI Analysis Pipeline
-- **Document Classification**: Type identification and purpose extraction
-- **Content Analysis**: Legal domain identification and key point extraction
-- **Compliance Mapping**: Requirement extraction and sector impact analysis
-- **Relationship Detection**: Cross-document regulatory relationship identification
-
-## AI Prompt Engineering Framework
-
-The platform employs a sophisticated prompt engineering approach with specialized modules:
-
-### Core Prompt Categories
-
-**Search and Relevance**
-- Semantic matching algorithms
-- Relevance scoring with confidence intervals
-- Excerpt extraction for relevant content
-
-**Regulatory Analysis**
-- Evolution detection and classification
-- Temporal reference extraction
-- Relationship strength assessment
-
-**Document Structure**
-- Section and article identification
-- Hierarchical content analysis
-- Structural element extraction
-
-**Compliance Assessment**
-- Sector-specific relevance determination
-- Requirement extraction and classification
-- Implementation complexity evaluation
-
-### Quality Assurance Features
-
-- **Confidence Scoring**: All AI outputs include reliability indicators
-- **Response Caching**: Optimized performance through intelligent caching
-- **Error Handling**: Comprehensive fallback mechanisms for AI failures
-- **Consistency Controls**: Fixed temperature and seed values for reproducible results
+**Advanced Analytics**
+- **Timeline Visualization**: Interactive scatter plots showing regulatory evolution over time
+- **Statistical Analysis**: Coverage percentages, document distribution, and importance metrics
+- **Relationship Classification**: Automated identification of document relationships to regulations
+- **Export Capabilities**: CSV data export and comprehensive PDF reports
 
 ## Performance Metrics
 
 ### Dataset Scale
 - **Document Volume**: 3,000+ processed legal documents
 - **Time Coverage**: Multi-year regulatory tracking capability
-- **Processing Speed**: Optimized batch processing for large-scale analysis
+- **Processing Speed**: Optimized batch processing with real-time progress indicators
+- **Analysis Accuracy**: AI confidence scoring for all generated content
 
 ### Storage Optimization
-- **Compression Ratio**: 70-90% size reduction through Parquet format
-- **Query Performance**: Columnar storage for fast analytical queries
-- **Memory Efficiency**: Optimized data loading and processing
+- **Compression Ratio**: 70-90% size reduction through optimized Parquet format
+- **Query Performance**: Columnar storage enabling fast analytical queries
+- **Memory Efficiency**: Intelligent data loading and processing with caching mechanisms
 
 ### AI Performance
-- **Response Time**: Cached results for repeated queries
-- **Accuracy**: Confidence scoring for all AI-generated content
-- **Scalability**: Batch processing capabilities for comprehensive analysis
+- **Response Time**: Intelligent caching for repeated queries
+- **Accuracy**: Confidence scoring and fallback mechanisms for all AI-generated content
+- **Scalability**: Batch processing capabilities for comprehensive analysis of large document sets
 
-## Security and Compliance
+## Project Structure
 
-### Data Protection
-- **API Security**: Secure Azure OpenAI credential management
-- **Data Privacy**: No persistent storage of API responses
-- **Access Control**: Session-based state management
-
-### Quality Controls
-- **Source Verification**: Full traceability to original documents
-- **Content Validation**: AI confidence scoring and fallback mechanisms
-- **Export Integrity**: Consistent formatting and metadata preservation
-
-## Future Development Roadmap
-
-### Technical Enhancements
-- **Enhanced Relevance Scoring**: Implementation of cosine similarity with document embeddings
-- **Real-time Data Integration**: Automated scraping from EUR-Lex and national institutions
-- **Advanced Classification**: Machine learning models for consistent legal domain tagging
-
-### Feature Expansion
-- **Client-Specific Customization**: Integration of client metadata for targeted analysis
-- **Multilingual Support**: German and other European language processing
-- **Advanced Analytics**: Predictive modeling for regulatory trend analysis
-
-### Platform Integration
-- **API Development**: RESTful API for integration with existing legal systems
-- **Database Integration**: Enterprise database connectivity for large-scale deployments
-- **Advanced Reporting**: Professional report generation with legal formatting
+```
+Legal-Intelligence-Platform/
+├── __pycache__/                            # Python cache files
+├── .venv/                                  # Virtual environment
+├── data/                                   # Data processing files
+├── .gitignore                              # Git ignore configuration
+├── app.py                                  # Main Streamlit application
+├── compliance.png                          # Compliance feature screenshot
+├── documentbrowser.png                     # Document browser screenshot
+├── eurolex_consolidated.parquet            # Processed legal document dataset
+├── gpt_info_extractor - richard.ipynb     # GPT analysis notebook
+├── homepage.png                            # Main dashboard screenshot
+├── homepage1.png                           # Dashboard features screenshot
+├── legal_data_report.txt                   # Data analysis report
+├── legal_data_sample.csv                   # Sample data file
+├── prompts.md                              # AI prompt engineering documentation
+├── README.md                               # This documentation
+├── requirements.in                         # Core dependencies
+├── requirements.txt                        # All Python dependencies
+├── settings.py                             # Configuration settings
+├── test.py                                 # Testing utilities
+└── tracker.png                             # Regulatory tracking screenshot
+```
 
 ## Business Impact
 
-### Operational Benefits
-- **Early Warning System**: Detection of upcoming regulatory changes for proactive response
+### Operational Excellence
+- **Early Warning System**: Proactive detection of upcoming regulatory changes
 - **Efficiency Gains**: 80%+ reduction in manual document review time
-- **Quality Improvement**: Consistent, AI-powered analysis with confidence scoring
+- **Quality Improvement**: Consistent AI-powered analysis with transparent confidence scoring
+- **Risk Mitigation**: Early identification of compliance gaps and regulatory requirements
 
 ### Strategic Advantages
 - **Proactive Advisory**: Enhanced ability to advise clients before regulations are enacted
-- **Risk Mitigation**: Early identification of compliance gaps and requirements
-- **Competitive Differentiation**: Advanced AI capabilities for superior service delivery
+- **Competitive Differentiation**: Advanced AI capabilities providing superior service delivery
+- **Comprehensive Coverage**: Analysis of entire regulatory corpus vs. traditional manual sampling
+- **Data-Driven Insights**: Statistical analysis and trend identification for strategic planning
 
 ### Measurable Outcomes
 - **Time Savings**: Hours to minutes for comprehensive regulatory analysis
-- **Coverage Improvement**: Analysis of entire regulatory corpus vs. manual sampling
-- **Service Enhancement**: Faster, more comprehensive insights for stakeholders
+- **Coverage Improvement**: Complete corpus analysis vs. selective manual review
+- **Service Enhancement**: Faster, more comprehensive insights for stakeholders and clients
+- **Accuracy Improvement**: AI-powered consistency with confidence scoring for reliability
 
-## Challenges and Learnings
+## Security and Quality Assurance
 
-### Technical Challenges
-- **Document Variability**: Handling diverse formatting and structure across legal documents
-- **AI Model Selection**: Balancing performance, cost, and reliability across different models
-- **Prompt Engineering**: Achieving consistent, structured outputs through iterative development
+### Data Protection
+- **API Security**: Secure OpenAI API credential management with no persistent storage of sensitive data
+- **Data Privacy**: Session-based processing with no permanent storage of API responses
+- **Access Control**: Secure session state management and user isolation
 
-### Organizational Insights
-- **Modular Architecture**: Essential for flexibility and independent component iteration
-- **Transparency Requirements**: Need for explainable AI outputs in legal contexts
-- **Scalability Considerations**: Optimizing for large-scale document processing
+### Quality Controls
+- **Source Verification**: Complete traceability to original legal documents
+- **Content Validation**: Multi-stage AI confidence scoring and fallback mechanisms
+- **Export Integrity**: Consistent formatting and comprehensive metadata preservation
+- **Error Handling**: Robust error management with detailed logging and recovery procedures
 
-## Support and Maintenance
+## Contributing
 
-### Technical Support
-- Comprehensive error handling with detailed logging
-- Performance monitoring and optimization recommendations
-- Regular updates for AI model improvements
+We welcome contributions! Please feel free to submit pull requests, report bugs, or suggest new features.
 
-### Documentation
-- Complete API documentation for all custom utilities
-- User guides for each major platform feature
-- Technical specifications for system administrators
-
-### Training and Resources
-- User training materials for legal professionals
-- Technical documentation for development teams
-- Best practices guide for optimal platform utilization
+### Development Guidelines
+- Follow Python PEP 8 style guidelines
+- Include comprehensive documentation for new features
+- Add unit tests for new functionality
+- Update README for any new capabilities
 
 ## License
 
 This project is open source and available for legal monitoring and compliance analysis applications. All AI-generated content includes appropriate confidence scoring and source attribution for professional legal analysis.
 
-## Contributing
+## Support
 
-Contributions are welcome! Please read the contribution guidelines and submit pull requests for any improvements or new features.
+For technical support, feature requests, or questions about implementation, please open an issue on GitHub or contact the development team.
+
+---
+
+<div align="center">
+  <h3>🚀 Transform Your Legal Intelligence Capabilities</h3>
+  <p><em>Harness the power of AI for comprehensive legal document analysis, compliance assessment, and regulatory tracking</em></p>
+</div>
