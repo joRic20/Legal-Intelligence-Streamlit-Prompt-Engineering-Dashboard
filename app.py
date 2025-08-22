@@ -4,7 +4,7 @@ import json
 from datetime import datetime, timedelta
 import plotly.express as px
 import plotly.graph_objects as go
-from openai import AzureOpenAI
+from openai import OpenAI
 from collections import defaultdict
 import os
 import time
@@ -15,158 +15,618 @@ import re
 
 # Import settings
 try:
-    from settings import (
-        AZURE_API_KEY,
-        AZURE_OPENAI_ENDPOINT,
-        AZURE_OPENAI_API_VERSION,
-        CONTAINER_NAME,
-        PARQUET_FILE_PATH
-    )
+    from settings import OPEN_API_KEY
 except ImportError:
-    st.error("Unable to import settings.py. Please ensure settings.py is in the same directory as app.py")
+    # If settings.py doesn't exist, provide instructions
+    st.error("""
+    **Settings file not found!** 
+    
+    Please create a `settings.py` file in the same directory as this app with:
+    
+    ```python
+    # settings.py
+    OPEN_API_KEY = "your_openai_api_key_here"
+    ```
+    """)
     st.stop()
 
-# Grant Thornton Brand Colors and Styling
-GT_COLORS = {
-    'primary_purple': '#663399',
-    'secondary_purple': '#8B4FA0',
-    'accent_orange': '#FF6900',
-    'light_orange': '#FFB366',
-    'dark_gray': '#2C3E50',
-    'medium_gray': '#5D6D7E',
-    'light_gray': '#F8F9FA',
-    'white': '#FFFFFF',
-    'success_green': '#27AE60',
-    'warning_yellow': '#F39C12',
-    'error_red': '#E74C3C',
-    'info_blue': '#3498DB'
+# Modern Color Palette inspired by the provided images
+MODERN_COLORS = {
+    # Primary oranges and corals
+    'primary_orange': '#FF6B35',
+    'primary_coral': '#FF8C69',
+    'accent_orange': '#FF4500',
+    'accent_warm': '#FF7F50',
+    
+    # Secondary warm tones
+    'secondary_peach': '#FFAB91',
+    'secondary_salmon': '#FA8072',
+    'tertiary_orange': '#FFA07A',
+    'soft_orange': '#FFB366',
+    
+    # Neutral bases
+    'background_dark': '#1A1A1A',
+    'background_medium': '#2D2D2D',
+    'background_light': '#F8F8F8',
+    'background_cream': '#FFF8F0',
+    'surface_white': '#FFFFFF',
+    'surface_warm': '#FDF6F0',
+    
+    # Text colors
+    'text_primary': '#2C2C2C',
+    'text_secondary': '#5C5C5C',
+    'text_muted': '#8C8C8C',
+    'text_white': '#FFFFFF',
+    'text_warm': '#4A4A4A',
+    
+    # Status colors
+    'success_green': '#28A745',
+    'warning_amber': '#FFC107',
+    'error_red': '#DC3545',
+    'info_blue': '#17A2B8',
+    
+    # Interactive elements
+    'border_light': '#E8E8E8',
+    'border_medium': '#D0D0D0',
+    'shadow_light': 'rgba(255, 107, 53, 0.1)',
+    'shadow_medium': 'rgba(255, 107, 53, 0.2)',
+    'hover_orange': '#FF8A65',
+    
+    # Gradients
+    'gradient_warm': 'linear-gradient(135deg, #FF6B35 0%, #FF8C69 50%, #FFB366 100%)',
+    'gradient_soft': 'linear-gradient(135deg, #FFF8F0 0%, #FDF6F0 100%)',
+    'gradient_accent': 'linear-gradient(135deg, #FF4500 0%, #FF6B35 100%)',
 }
 
-# Page configuration with Grant Thornton branding
+# Page configuration
 st.set_page_config(
-    page_title="Grant Thornton Legal Intelligence Platform",
+    page_title="Legal Intelligence Platform",
     page_icon="⚖️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Grant Thornton Professional CSS Styling
+# Modern Professional CSS Styling
 st.markdown(f"""
 <style>
-    /* Grant Thornton Brand Styling */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700&display=swap');
+    
+    /* Global Reset & Typography */
+    * {{
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        box-sizing: border-box;
+    }}
+    
+    /* Main App Background */
+    .stApp {{
+        background: {MODERN_COLORS['background_light']};
+        color: {MODERN_COLORS['text_primary']};
+        line-height: 1.6;
+    }}
+    
+    /* Modern Header Section */
     .main-header {{
-        background: linear-gradient(135deg, {GT_COLORS['primary_purple']} 0%, {GT_COLORS['secondary_purple']} 100%);
-        color: {GT_COLORS['white']};
-        padding: 2.5rem;
-        border-radius: 12px;
-        margin-bottom: 2rem;
+        background: {MODERN_COLORS['gradient_warm']};
+        color: {MODERN_COLORS['text_white']};
+        padding: 4rem 2rem;
+        border-radius: 24px;
+        margin-bottom: 3rem;
         text-align: center;
-        box-shadow: 0 4px 6px rgba(102, 51, 153, 0.2);
+        box-shadow: 0 20px 40px rgba(255, 107, 53, 0.3), 0 8px 16px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(20px);
+        position: relative;
+        overflow: hidden;
     }}
     
-    .gt-logo {{
-        font-size: 2.5rem;
+    .main-header::before {{
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+    }}
+    
+    .platform-logo {{
+        font-family: 'Poppins', sans-serif;
+        font-size: 3rem;
         font-weight: 700;
-        color: {GT_COLORS['white']};
-        margin-bottom: 0.5rem;
+        color: {MODERN_COLORS['text_white']};
+        margin-bottom: 1rem;
+        letter-spacing: -0.02em;
+        position: relative;
+        z-index: 1;
     }}
     
-    .gt-subtitle {{
-        font-size: 1.2rem;
-        color: {GT_COLORS['light_orange']};
+    .platform-subtitle {{
+        font-size: 1.3rem;
+        color: rgba(255, 255, 255, 0.95);
         font-weight: 400;
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 1;
     }}
     
     .ai-powered-badge {{
-        background: {GT_COLORS['accent_orange']};
-        color: {GT_COLORS['white']};
-        padding: 0.5rem 1rem;
-        border-radius: 25px;
-        font-size: 0.9rem;
+        background: rgba(255, 255, 255, 0.25);
+        color: {MODERN_COLORS['text_white']};
+        padding: 1rem 2rem;
+        border-radius: 30px;
+        font-size: 1rem;
         font-weight: 600;
         display: inline-block;
-        margin-top: 1rem;
-        box-shadow: 0 2px 4px rgba(255, 105, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+        position: relative;
+        z-index: 1;
     }}
     
+    .ai-powered-badge:hover {{
+        background: rgba(255, 255, 255, 0.35);
+        transform: translateY(-2px);
+    }}
+    
+    /* Modern Document Cards */
     .document-card {{
-        background: {GT_COLORS['white']};
-        border: 1px solid #E5E7EB;
-        border-left: 4px solid {GT_COLORS['primary_purple']};
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        background: {MODERN_COLORS['surface_white']};
+        border: 1px solid {MODERN_COLORS['border_light']};
+        border-left: 4px solid {MODERN_COLORS['primary_orange']};
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }}
+    
+    .document-card::before {{
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: {MODERN_COLORS['gradient_accent']};
+        opacity: 0;
+        transition: opacity 0.3s ease;
     }}
     
     .document-card:hover {{
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(102, 51, 153, 0.15);
+        transform: translateY(-8px);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(255, 107, 53, 0.1);
+        border-left-color: {MODERN_COLORS['accent_orange']};
     }}
     
-    .confidence-indicator {{
-        display: inline-block;
-        padding: 0.3rem 0.8rem;
-        border-radius: 15px;
-        font-size: 0.8rem;
+    .document-card:hover::before {{
+        opacity: 1;
+    }}
+    
+    /* Filters Container */
+    .filters-container {{
+        background: {MODERN_COLORS['surface_white']};
+        border: 1px solid {MODERN_COLORS['border_light']};
+        border-radius: 20px;
+        padding: 2.5rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+        backdrop-filter: blur(20px);
+        position: relative;
+    }}
+    
+    .filters-header {{
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.4rem;
         font-weight: 600;
-        margin-left: 0.5rem;
+        color: {MODERN_COLORS['text_primary']};
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid {MODERN_COLORS['primary_orange']};
+        position: relative;
+    }}
+    
+    .filters-header::after {{
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 60px;
+        height: 2px;
+        background: {MODERN_COLORS['accent_orange']};
+    }}
+    
+    /* Modern Confidence Indicators */
+    .confidence-indicator {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-left: 0.75rem;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }}
+    
+    .confidence-indicator::before {{
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }}
+    
+    .confidence-indicator:hover::before {{
+        left: 100%;
     }}
     
     .confidence-high {{
-        background: {GT_COLORS['success_green']};
-        color: {GT_COLORS['white']};
+        background: linear-gradient(135deg, {MODERN_COLORS['success_green']} 0%, #20C997 100%);
+        color: {MODERN_COLORS['text_white']};
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
     }}
     
     .confidence-medium {{
-        background: {GT_COLORS['warning_yellow']};
-        color: {GT_COLORS['white']};
+        background: linear-gradient(135deg, {MODERN_COLORS['warning_amber']} 0%, #FFB800 100%);
+        color: {MODERN_COLORS['text_white']};
+        box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
     }}
     
     .confidence-low {{
-        background: {GT_COLORS['error_red']};
-        color: {GT_COLORS['white']};
+        background: linear-gradient(135deg, {MODERN_COLORS['error_red']} 0%, #E74C3C 100%);
+        color: {MODERN_COLORS['text_white']};
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
     }}
     
+    /* Legal Domain Tags */
     .legal-domain-tag {{
-        background: {GT_COLORS['secondary_purple']};
-        color: {GT_COLORS['white']};
-        padding: 0.3rem 0.8rem;
+        background: {MODERN_COLORS['gradient_warm']};
+        color: {MODERN_COLORS['text_white']};
+        padding: 0.6rem 1.2rem;
         border-radius: 20px;
-        font-size: 0.85rem;
+        font-size: 0.9rem;
         font-weight: 500;
-        margin: 0.2rem;
+        margin: 0.4rem 0.4rem 0.4rem 0;
         display: inline-block;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 2px 10px rgba(255, 107, 53, 0.25);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }}
     
-    .sidebar .sidebar-content {{
-        background: {GT_COLORS['light_gray']};
+    .legal-domain-tag:hover {{
+        transform: translateY(-2px) scale(1.05);
+        box-shadow: 0 6px 20px rgba(255, 107, 53, 0.35);
     }}
     
-    .gt-filter-section {{
-        background: {GT_COLORS['white']};
-        border: 1px solid #E5E7EB;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
+    /* Stats Cards */
+    .stats-card {{
+        background: {MODERN_COLORS['surface_white']};
+        border: 1px solid {MODERN_COLORS['border_light']};
+        border-radius: 16px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
     }}
     
+    .stats-card::before {{
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: {MODERN_COLORS['gradient_accent']};
+    }}
+    
+    .stats-card:hover {{
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }}
+    
+    .stats-number {{
+        font-family: 'Poppins', sans-serif;
+        font-size: 2rem;
+        font-weight: 700;
+        color: {MODERN_COLORS['primary_orange']};
+        display: block;
+        line-height: 1.2;
+    }}
+    
+    .stats-label {{
+        font-size: 0.95rem;
+        color: {MODERN_COLORS['text_secondary']};
+        margin-top: 0.5rem;
+        font-weight: 500;
+    }}
+    
+    /* Modern Tabs */
     .stTabs [data-baseweb="tab-list"] {{
-        gap: 24px;
+        gap: 16px;
+        background: {MODERN_COLORS['surface_white']};
+        padding: 1rem;
+        border-radius: 16px;
+        border: 1px solid {MODERN_COLORS['border_light']};
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }}
     
     .stTabs [data-baseweb="tab"] {{
-        background: {GT_COLORS['light_gray']};
-        border-radius: 8px 8px 0 0;
-        color: {GT_COLORS['dark_gray']};
-        font-weight: 600;
-        padding: 0.75rem 1.5rem;
+        background: transparent;
+        border-radius: 12px;
+        color: {MODERN_COLORS['text_secondary']};
+        font-weight: 500;
+        padding: 1rem 1.75rem;
+        border: 1px solid transparent;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
     }}
     
     .stTabs [aria-selected="true"] {{
-        background: {GT_COLORS['primary_purple']};
-        color: {GT_COLORS['white']};
+        background: {MODERN_COLORS['gradient_warm']};
+        color: {MODERN_COLORS['text_white']};
+        font-weight: 600;
+        box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transform: translateY(-2px);
+    }}
+    
+    .stTabs [data-baseweb="tab"]:hover:not([aria-selected="true"]) {{
+        background: {MODERN_COLORS['surface_warm']};
+        border: 1px solid {MODERN_COLORS['border_medium']};
+        color: {MODERN_COLORS['text_primary']};
+    }}
+    
+    /* Modern Buttons */
+    .stButton > button {{
+        background: {MODERN_COLORS['gradient_warm']};
+        color: {MODERN_COLORS['text_white']};
+        border: none;
+        border-radius: 12px;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+        position: relative;
+        overflow: hidden;
+    }}
+    
+    .stButton > button::before {{
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+    }}
+    
+    .stButton > button:hover {{
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(255, 107, 53, 0.4);
+    }}
+    
+    .stButton > button:hover::before {{
+        left: 100%;
+    }}
+    
+    /* Input Styling */
+    .stTextInput > div > div > input {{
+        background: {MODERN_COLORS['surface_white']};
+        border: 2px solid {MODERN_COLORS['border_light']};
+        border-radius: 12px;
+        padding: 1rem;
+        font-size: 0.95rem;
+        color: {MODERN_COLORS['text_primary']};
+        transition: all 0.3s ease;
+    }}
+    
+    .stTextInput > div > div > input:focus {{
+        border-color: {MODERN_COLORS['primary_orange']};
+        box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
+        outline: none;
+    }}
+    
+    /* Selectbox Styling */
+    .stSelectbox > div > div {{
+        background: {MODERN_COLORS['surface_white']};
+        border: 2px solid {MODERN_COLORS['border_light']};
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }}
+    
+    .stSelectbox > div > div:focus-within {{
+        border-color: {MODERN_COLORS['primary_orange']};
+        box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
+    }}
+    
+    /* Date Input Styling */
+    .stDateInput > div > div {{
+        background: {MODERN_COLORS['surface_white']};
+        border: 2px solid {MODERN_COLORS['border_light']};
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }}
+    
+    /* Metrics Styling */
+    .stMetric {{
+        background: {MODERN_COLORS['surface_white']};
+        border: 1px solid {MODERN_COLORS['border_light']};
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+    }}
+    
+    .stMetric:hover {{
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }}
+    
+    /* Enhanced Text Readability */
+    .stMarkdown h1, .stMarkdown h2, .stMarkdown h3, .stMarkdown h4 {{
+        color: {MODERN_COLORS['text_primary']};
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        line-height: 1.3;
+    }}
+    
+    .stMarkdown h1 {{
+        font-size: 2.5rem;
+    }}
+    
+    .stMarkdown h2 {{
+        font-size: 2rem;
+        margin-top: 2rem;
+    }}
+    
+    .stMarkdown h3 {{
+        font-size: 1.5rem;
+        margin-top: 1.5rem;
+    }}
+    
+    .stMarkdown p, .stMarkdown li {{
+        color: {MODERN_COLORS['text_secondary']};
+        font-size: 1rem;
+        line-height: 1.6;
+    }}
+    
+    /* Alert Styling */
+    .stAlert {{
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        border: 1px solid {MODERN_COLORS['border_light']};
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }}
+    
+    /* Progress bar */
+    .stProgress > div > div > div {{
+        background: {MODERN_COLORS['gradient_warm']};
+        border-radius: 10px;
+    }}
+    
+    /* Search result highlighting */
+    .search-result-header {{
+        background: {MODERN_COLORS['gradient_warm']};
+        color: {MODERN_COLORS['text_white']};
+        padding: 1.25rem 2rem;
+        border-radius: 16px;
+        margin: 1rem 0;
+        font-weight: 500;
+        box-shadow: 0 4px 16px rgba(255, 107, 53, 0.3);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }}
+    
+    /* Document metadata styling */
+    .metadata-container {{
+        background: {MODERN_COLORS['surface_warm']};
+        border: 1px solid {MODERN_COLORS['border_light']};
+        border-radius: 16px;
+        padding: 2rem;
+        margin: 1.5rem 0;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+    }}
+    
+    /* Impact level indicators */
+    .impact-high {{
+        background: linear-gradient(135deg, {MODERN_COLORS['error_red']} 0%, #E74C3C 100%);
+        color: {MODERN_COLORS['text_white']};
+        padding: 0.75rem 1.25rem;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: 600;
+        box-shadow: 0 4px 16px rgba(220, 53, 69, 0.3);
+    }}
+    
+    .impact-medium {{
+        background: linear-gradient(135deg, {MODERN_COLORS['warning_amber']} 0%, #FFB800 100%);
+        color: {MODERN_COLORS['text_white']};
+        padding: 0.75rem 1.25rem;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: 600;
+        box-shadow: 0 4px 16px rgba(255, 193, 7, 0.3);
+    }}
+    
+    .impact-low {{
+        background: linear-gradient(135deg, {MODERN_COLORS['success_green']} 0%, #20C997 100%);
+        color: {MODERN_COLORS['text_white']};
+        padding: 0.75rem 1.25rem;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: 600;
+        box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+    }}
+    
+    /* Loading animations */
+    @keyframes pulse {{
+        0% {{ opacity: 1; }}
+        50% {{ opacity: 0.5; }}
+        100% {{ opacity: 1; }}
+    }}
+    
+    .loading-pulse {{
+        animation: pulse 2s infinite;
+    }}
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {{
+        .platform-logo {{
+            font-size: 2rem;
+        }}
+        
+        .platform-subtitle {{
+            font-size: 1.1rem;
+        }}
+        
+        .main-header {{
+            padding: 2rem 1rem;
+        }}
+        
+        .filters-container {{
+            padding: 1.5rem;
+        }}
+        
+        .document-card {{
+            padding: 1.5rem;
+        }}
+    }}
+    
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {{
+        width: 8px;
+    }}
+    
+    ::-webkit-scrollbar-track {{
+        background: {MODERN_COLORS['background_light']};
+    }}
+    
+    ::-webkit-scrollbar-thumb {{
+        background: {MODERN_COLORS['primary_orange']};
+        border-radius: 4px;
+    }}
+    
+    ::-webkit-scrollbar-thumb:hover {{
+        background: {MODERN_COLORS['accent_orange']};
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -480,7 +940,6 @@ class LegalAIAnalyzer:
         self.client = client
         self.confidence_threshold = 0.7
         self.temperature = 0.0  # Fixed temperature for consistency
-        self.seed = 42  # Fixed seed for reproducibility
         
         # Initialize prompt classes
         self.search_prompts = SearchRelevancePrompts()
@@ -607,7 +1066,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                     )}
                 ],
                 temperature=self.temperature,
-                seed=self.seed,
                 max_tokens=300,
                 response_format={"type": "json_object"}
             )
@@ -625,7 +1083,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                     )}
                 ],
                 temperature=self.temperature,
-                seed=self.seed,
                 max_tokens=200,
                 response_format={"type": "json_object"}
             )
@@ -645,7 +1102,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                         )}
                     ],
                     temperature=self.temperature,
-                    seed=self.seed,
                     max_tokens=400,
                     response_format={"type": "json_object"}
                 )
@@ -693,7 +1149,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                     )}
                 ],
                 temperature=self.temperature,
-                seed=self.seed,
                 max_tokens=200,
                 response_format={"type": "json_object"}
             )
@@ -719,7 +1174,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                     )}
                 ],
                 temperature=self.temperature,
-                seed=self.seed,
                 max_tokens=200,
                 response_format={"type": "json_object"}
             )
@@ -737,7 +1191,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                     )}
                 ],
                 temperature=self.temperature,
-                seed=self.seed,
                 max_tokens=300,
                 response_format={"type": "json_object"}
             )
@@ -755,7 +1208,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                     )}
                 ],
                 temperature=self.temperature,
-                seed=self.seed,
                 max_tokens=300,
                 response_format={"type": "json_object"}
             )
@@ -805,7 +1257,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                     )}
                 ],
                 temperature=self.temperature,
-                seed=self.seed,
                 max_tokens=150,
                 response_format={"type": "json_object"}
             )
@@ -822,7 +1273,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                     )}
                 ],
                 temperature=self.temperature,
-                seed=self.seed,
                 max_tokens=150,
                 response_format={"type": "json_object"}
             )
@@ -839,7 +1289,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                     )}
                 ],
                 temperature=self.temperature,
-                seed=self.seed,
                 max_tokens=300,
                 response_format={"type": "json_object"}
             )
@@ -856,7 +1305,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                     )}
                 ],
                 temperature=self.temperature,
-                seed=self.seed,
                 max_tokens=300,
                 response_format={"type": "json_object"}
             )
@@ -907,7 +1355,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                     )}
                 ],
                 temperature=self.temperature,
-                seed=self.seed,
                 max_tokens=400,
                 response_format={"type": "json_object"}
             )
@@ -926,7 +1373,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                         )}
                     ],
                     temperature=self.temperature,
-                    seed=self.seed,
                     max_tokens=600,
                     response_format={"type": "json_object"}
                 )
@@ -980,7 +1426,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                         )}
                     ],
                     temperature=self.temperature,
-                    seed=self.seed,
                     max_tokens=200,
                     response_format={"type": "json_object"}
                 )
@@ -999,7 +1444,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                             )}
                         ],
                         temperature=self.temperature,
-                        seed=self.seed,
                         max_tokens=400,
                         response_format={"type": "json_object"}
                     )
@@ -1017,7 +1461,6 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
                             )}
                         ],
                         temperature=self.temperature,
-                        seed=self.seed,
                         max_tokens=200,
                         response_format={"type": "json_object"}
                     )
@@ -1069,12 +1512,10 @@ IMPORTANT: Only extract what is explicitly written. Never make assumptions."""
 
 @st.cache_resource
 def initialize_ai_client():
-    """Initialize Azure OpenAI client"""
+    """Initialize OpenAI client"""
     try:
-        client = AzureOpenAI(
-            api_key=AZURE_API_KEY,
-            azure_endpoint=AZURE_OPENAI_ENDPOINT,
-            api_version=AZURE_OPENAI_API_VERSION
+        client = OpenAI(
+            api_key=OPEN_API_KEY
         )
         
         # Test connection
@@ -1096,26 +1537,26 @@ def load_legal_dataset():
     try:
         # Try multiple possible paths
         possible_paths = [
-            "/Users/joric/Documents/NLP Project/Prompt Engineering /eurolex_consolidated.parquet",
-            PARQUET_FILE_PATH,
-            "eurolex_consolidated.parquet",
-            "data/eurolex_consolidated.parquet"
+            "eurolex_consolidated.parquet",  # Root folder (primary location)
+            "data/eurolex_consolidated.parquet",  # Data subfolder
+            "src/resources/eurolex_consolidated.parquet"  # Resources subfolder
         ]
         
         df = None
         for path in possible_paths:
             if os.path.exists(path):
                 df = pd.read_parquet(path)
+                st.info(f"Dataset loaded successfully from: {path}")
                 break
         
         if df is None:
-            st.error("❌ Dataset not found. Please check file location.")
+            st.error("Dataset not found. Please ensure 'eurolex_consolidated.parquet' is in your project root folder.")
             return None
         
         # Basic data validation
         required_columns = ['filename', 'folder', 'text']
         if not all(col in df.columns for col in required_columns):
-            st.error(f"❌ Missing required columns. Found: {list(df.columns)}")
+            st.error(f"Missing required columns. Found: {list(df.columns)}")
             return None
         
         # Data preprocessing
@@ -1127,7 +1568,7 @@ def load_legal_dataset():
         return df
         
     except Exception as e:
-        st.error(f"❌ Error loading dataset: {str(e)}")
+        st.error(f"Error loading dataset: {str(e)}")
         return None
 
 def render_confidence_indicator(confidence: float) -> str:
@@ -1150,22 +1591,25 @@ def display_summary_card(doc: Dict, summary: Dict) -> None:
     
     card_html = f"""
     <div class="document-card">
-        <h4 style="color: {GT_COLORS['primary_purple']}; margin: 0 0 0.5rem 0;">
-            📄 {doc_id[:80]}{'...' if len(doc_id) > 80 else ''}
+        <h4 style="color: {MODERN_COLORS['primary_orange']}; margin: 0 0 0.75rem 0; font-weight: 600; font-size: 1.2rem;">
+            {doc_id[:80]}{'...' if len(doc_id) > 80 else ''}
         </h4>
-        <p style="color: {GT_COLORS['medium_gray']}; margin: 0 0 0.5rem 0; font-size: 0.9rem;">
-            <strong>Type:</strong> {summary.get('document_type', 'Unknown')} | 
-            <strong>Importance:</strong> {summary.get('importance', 'Unknown')} |
-            <strong>Date:</strong> {doc.get('publication_date', pd.NaT).strftime('%B %Y') if pd.notna(doc.get('publication_date')) else 'Unknown'}
+        <p style="color: {MODERN_COLORS['text_secondary']}; margin: 0 0 1rem 0; font-size: 0.95rem; line-height: 1.5;">
+            <strong style="color: {MODERN_COLORS['text_primary']};">Type:</strong> {summary.get('document_type', 'Unknown')} | 
+            <strong style="color: {MODERN_COLORS['text_primary']};">Importance:</strong> {summary.get('importance', 'Unknown')} |
+            <strong style="color: {MODERN_COLORS['text_primary']};">Date:</strong> {doc.get('publication_date', pd.NaT).strftime('%B %Y') if pd.notna(doc.get('publication_date')) else 'Unknown'}
         </p>
-        <p style="margin: 0.5rem 0;"><strong>Purpose:</strong> {summary.get('main_purpose', 'Not specified')}</p>
-        <div style="margin: 0.5rem 0;">
-            <strong>Key Points:</strong>
-            <ul style="margin: 0.5rem 0 0 1rem; padding-left: 1rem;">
-                {"".join([f"<li style='margin: 0.25rem 0;'>{point}</li>" for point in summary.get('key_points', [])])}
+        <p style="margin: 1rem 0; color: {MODERN_COLORS['text_primary']}; font-size: 1rem; line-height: 1.6;">
+            <strong style="color: {MODERN_COLORS['text_primary']};">Purpose:</strong> 
+            <span style="color: {MODERN_COLORS['text_secondary']};">{summary.get('main_purpose', 'Not specified')}</span>
+        </p>
+        <div style="margin: 1rem 0;">
+            <strong style="color: {MODERN_COLORS['text_primary']}; font-size: 1rem;">Key Points:</strong>
+            <ul style="margin: 0.75rem 0 0 1.5rem; padding-left: 0; list-style-type: none;">
+                {"".join([f"<li style='margin: 0.5rem 0; position: relative; padding-left: 1rem; color: {MODERN_COLORS['text_secondary']}; line-height: 1.5;'><span style='position: absolute; left: 0; color: {MODERN_COLORS['primary_orange']};'>•</span>{point}</li>" for point in summary.get('key_points', [])])}
             </ul>
         </div>
-        <div style="margin-top: 0.5rem;">
+        <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid {MODERN_COLORS['border_light']};">
             {"".join([f'<span class="legal-domain-tag">{topic}</span>' for topic in summary.get('topics', [])])}
         </div>
     </div>
@@ -1179,18 +1623,24 @@ def display_detailed_analysis(doc: Dict, analysis: Dict, ai_analyzer: LegalAIAna
     
     # Header
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, {GT_COLORS['primary_purple']} 0%, {GT_COLORS['secondary_purple']} 100%); 
-                color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
-        <h3 style="margin: 0;">{doc_id}</h3>
-        <p style="margin: 0.5rem 0 0 0; opacity: 0.9;">
-            {metadata.get('document_type', 'Unknown Type')} | 
-            Published: {doc.get('publication_date', pd.NaT).strftime('%B %Y') if pd.notna(doc.get('publication_date')) else 'Unknown'}
-        </p>
+    <div style="background: {MODERN_COLORS['gradient_warm']}; 
+                color: {MODERN_COLORS['text_white']}; padding: 2.5rem 2rem; border-radius: 20px; margin-bottom: 2rem;
+                box-shadow: 0 12px 32px rgba(255, 107, 53, 0.4); backdrop-filter: blur(20px);
+                border: 1px solid rgba(255, 255, 255, 0.2); position: relative; overflow: hidden;">
+        <div style="position: relative; z-index: 1;">
+            <h3 style="margin: 0; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); font-family: 'Poppins', sans-serif; font-size: 1.8rem; font-weight: 700;">
+                {doc_id}
+            </h3>
+            <p style="margin: 1rem 0 0 0; opacity: 0.95; font-size: 1.1rem; font-weight: 400;">
+                {metadata.get('document_type', 'Unknown Type')} | 
+                Published: {doc.get('publication_date', pd.NaT).strftime('%B %Y') if pd.notna(doc.get('publication_date')) else 'Unknown'}
+            </p>
+        </div>
     </div>
     """, unsafe_allow_html=True)
     
     # Analysis tabs
-    tabs = st.tabs(["📊 Overview", "⚖️ Legal Analysis", "💼 Compliance", "📄 Full Document"])
+    tabs = st.tabs(["Overview", "Legal Analysis", "Compliance", "Full Document"])
     
     with tabs[0]:  # Overview
         col1, col2 = st.columns([2, 1])
@@ -1248,7 +1698,7 @@ def display_detailed_analysis(doc: Dict, analysis: Dict, ai_analyzer: LegalAIAna
     
     with tabs[3]:  # Full Document
         # Get document structure
-        with st.spinner("🤖 AI analyzing document structure..."):
+        with st.spinner("AI analyzing document structure..."):
             structure = ai_analyzer.extract_document_structure(doc['text'])
         
         if structure.get('sections'):
@@ -1262,12 +1712,12 @@ def display_detailed_analysis(doc: Dict, analysis: Dict, ai_analyzer: LegalAIAna
         st.text_area("Document Content", doc['text'], height=500, disabled=True)
 
 def main():
-    # Grant Thornton Header
+    # Professional Header
     st.markdown(f"""
     <div class="main-header">
-        <div class="gt-logo">Grant Thornton Legal</div>
-        <div class="gt-subtitle">Advanced AI-Powered Legal Intelligence Platform</div>
-        <div class="ai-powered-badge">🤖 Fully AI-Driven Analysis</div>
+        <div class="platform-logo">Legal Intelligence Platform</div>
+        <div class="platform-subtitle">Advanced AI-Powered Legal Document Analysis</div>
+        <div class="ai-powered-badge">Fully AI-Driven Analysis</div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -1275,7 +1725,7 @@ def main():
     ai_analyzer, ai_connected = initialize_ai_client()
     
     if not ai_connected:
-        st.error("🚫 AI System Required. Please configure Azure OpenAI credentials.")
+        st.error("AI System Required. Please configure OpenAI API credentials.")
         return
     
     # Load dataset
@@ -1283,39 +1733,44 @@ def main():
     if df is None:
         return
     
-    # Sidebar
-    with st.sidebar:
+    # Filters Section
+    st.markdown('<div class="filters-container">', unsafe_allow_html=True)
+    st.markdown('<div class="filters-header">Dataset Overview & Controls</div>', unsafe_allow_html=True)
+    
+    # Create filter columns
+    filter_col1, filter_col2, filter_col3 = st.columns([2, 2, 3])
+    
+    with filter_col1:
+        st.markdown("**Dataset Statistics**")
         st.markdown(f"""
-        <div style="background: {GT_COLORS['primary_purple']}; color: white; 
-                    padding: 1rem; border-radius: 8px; text-align: center; margin-bottom: 1rem;">
-            <h3 style="margin: 0;">🔍 AI Legal Intelligence</h3>
+        <div class="stats-card">
+            <span class="stats-number">{len(df):,}</span>
+            <span class="stats-label">Total Documents</span>
         </div>
         """, unsafe_allow_html=True)
-        
-        # AI Status
-        st.markdown("### 🤖 AI System Status")
-        st.success("✅ Advanced AI Analysis Active")
-        
-        # Dataset Overview
-        st.markdown("### 📊 Dataset Overview")
-        st.info(f"""
-        **Total Documents:** {len(df):,}  
-        **Date Range:** {df['publication_date'].min().strftime('%Y-%m')} to {df['publication_date'].max().strftime('%Y-%m')}
-        """)
-        
-        # Filters
-        st.markdown('<div class="gt-filter-section">', unsafe_allow_html=True)
-        st.markdown("### 🎯 Intelligent Filters")
-        
-        # Date range
+    
+    with filter_col2:
+        st.markdown("**AI Analysis Status**")
+        st.markdown(f"""
+        <div class="stats-card">
+            <span class="stats-number" style="color: {MODERN_COLORS['success_green']};">Active</span>
+            <span class="stats-label">Advanced AI Processing</span>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with filter_col3:
+        st.markdown("**Date Filter**")
+        # Date range filter
         date_range = st.date_input(
             "Publication Period",
             value=(df['publication_date'].max() - pd.DateOffset(months=6), df['publication_date'].max()),
             min_value=df['publication_date'].min(),
-            max_value=df['publication_date'].max()
+            max_value=df['publication_date'].max(),
+            help="Select date range for analysis"
         )
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("---")
     
     # Apply date filter
     filtered_df = df.copy()
@@ -1324,20 +1779,24 @@ def main():
             (filtered_df['publication_date'] >= pd.to_datetime(date_range[0])) &
             (filtered_df['publication_date'] <= pd.to_datetime(date_range[1]))
         ]
+        
+    # Show filtered results info
+    if len(filtered_df) != len(df):
+        st.info(f"Showing {len(filtered_df):,} documents from {date_range[0].strftime('%B %Y')} to {date_range[1].strftime('%B %Y')} (filtered from {len(df):,} total)")
     
     # Main tabs
     tab1, tab2, tab3 = st.tabs([
-        "🔍 Document Browser & Search",
-        "⚖️ Compliance Intelligence",
-        "🎯 Regulatory Tracking"
+        "Document Browser & Search",
+        "Compliance Intelligence", 
+        "Regulatory Tracking"
     ])
     
     with tab1:
-        st.markdown("## 📚 AI-Powered Document Browser")
+        st.markdown("## AI-Powered Document Browser")
         
         # Search interface
         search_query = st.text_input(
-            "🔍 AI-Powered Semantic Search",
+            "AI-Powered Semantic Search",
             placeholder="e.g., data protection, GDPR, financial services, competition law",
             help="AI will understand your intent and find semantically relevant documents"
         )
@@ -1345,14 +1804,14 @@ def main():
         # Display mode
         display_mode = st.radio(
             "Display Mode",
-            ["📋 Summary Cards", "📖 Detailed Analysis"],
+            ["Summary Cards", "Detailed Analysis"],
             horizontal=True
         )
         
         if search_query:
             # AI-powered search
-            if st.button("🚀 Start AI Search", type="primary", key="search_button"):
-                with st.spinner(f"🧠 AI searching for '{search_query}'..."):
+            if st.button("Start AI Search", type="primary", key="search_button"):
+                with st.spinner(f"AI searching for '{search_query}'..."):
                     search_results = []
                     
                     # Use AI to search documents
@@ -1379,7 +1838,7 @@ def main():
             
             # Display search results
             if st.session_state.search_results:
-                st.success(f"✅ Found {len(st.session_state.search_results)} relevant documents")
+                st.success(f"Found {len(st.session_state.search_results)} relevant documents")
                 
                 for idx, result in enumerate(st.session_state.search_results[:10]):
                     doc = result['doc']
@@ -1387,13 +1846,12 @@ def main():
                     
                     # Show relevance score
                     st.markdown(f"""
-                    <div style="background: {GT_COLORS['info_blue']}; color: white; 
-                                padding: 0.5rem; border-radius: 4px; margin: 0.5rem 0;">
-                        🎯 Relevance: {relevance['relevance_score']:.0%} - {relevance.get('explanation', '')}
+                    <div class="search-result-header">
+                        Relevance: {relevance['relevance_score']:.0%} - {relevance.get('explanation', '')}
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    if display_mode == "📋 Summary Cards":
+                    if display_mode == "Summary Cards":
                         # Get AI summary
                         summary = ai_analyzer.generate_ai_summary(doc['text'])
                         display_summary_card(doc, summary)
@@ -1401,14 +1859,14 @@ def main():
                         # Action buttons
                         col1, col2 = st.columns(2)
                         with col1:
-                            if st.button("🔬 Full Analysis", key=f"analyze_{idx}"):
+                            if st.button("Full Analysis", key=f"analyze_{idx}"):
                                 with st.spinner("Generating analysis..."):
                                     analysis = ai_analyzer.comprehensive_document_analysis(doc['text'])
                                     display_detailed_analysis(doc, analysis, ai_analyzer)
                         
                         with col2:
                             st.download_button(
-                                "📥 Download",
+                                "Download",
                                 doc['text'],
                                 file_name=f"{doc['filename'].replace('/', '_')}.txt",
                                 mime="text/plain",
@@ -1422,11 +1880,11 @@ def main():
         
         else:
             # Show recent documents
-            st.markdown("### 📅 Recent Documents")
+            st.markdown("### Recent Documents")
             recent_docs = filtered_df.head(10)
             
             for idx, (_, doc) in enumerate(recent_docs.iterrows()):
-                if display_mode == "📋 Summary Cards":
+                if display_mode == "Summary Cards":
                     # Generate AI summary
                     with st.spinner(f"Generating summary {idx+1}/10..."):
                         summary = ai_analyzer.generate_ai_summary(doc['text'])
@@ -1435,14 +1893,14 @@ def main():
                     # Action buttons
                     col1, col2 = st.columns(2)
                     with col1:
-                        if st.button("🔬 Full Analysis", key=f"analyze_recent_{idx}"):
+                        if st.button("Full Analysis", key=f"analyze_recent_{idx}"):
                             with st.spinner("Generating analysis..."):
                                 analysis = ai_analyzer.comprehensive_document_analysis(doc['text'])
                                 display_detailed_analysis(doc, analysis, ai_analyzer)
                     
                     with col2:
                         st.download_button(
-                            "📥 Download",
+                            "Download",
                             doc['text'],
                             file_name=f"{doc['filename'].replace('/', '_')}.txt",
                             mime="text/plain",
@@ -1455,7 +1913,7 @@ def main():
                         display_detailed_analysis(doc, analysis, ai_analyzer)
     
     with tab2:
-        st.markdown("## ⚖️ AI Compliance Intelligence")
+        st.markdown("## AI Compliance Intelligence")
         
         col1, col2 = st.columns(2)
         
@@ -1470,8 +1928,8 @@ def main():
             )
         
         if company_name and sectors:
-            if st.button("🚀 Generate AI Compliance Assessment", type="primary"):
-                with st.spinner("🧠 AI analyzing compliance requirements..."):
+            if st.button("Generate AI Compliance Assessment", type="primary"):
+                with st.spinner("AI analyzing compliance requirements..."):
                     
                     # Find relevant documents using AI
                     relevant_docs = []
@@ -1483,7 +1941,7 @@ def main():
                             relevant_docs.append(doc)
                     
                     if relevant_docs:
-                        st.success(f"✅ Found {len(relevant_docs)} relevant documents for {company_name}")
+                        st.success(f"Found {len(relevant_docs)} relevant documents for {company_name}")
                         
                         # Analyze each document for compliance
                         for idx, doc in enumerate(relevant_docs[:5]):
@@ -1493,13 +1951,18 @@ def main():
                             if impact.get('overall_impact') != 'None':
                                 st.markdown(f"""
                                 <div class="document-card">
-                                    <h4>📋 {doc['filename'][:60]}...</h4>
-                                    <p><strong>Overall Impact:</strong> {impact['overall_impact']}</p>
+                                    <h4 style="color: {MODERN_COLORS['primary_orange']}; margin: 0 0 0.75rem 0; font-weight: 600; font-size: 1.2rem;">
+                                        {doc['filename'][:60]}...
+                                    </h4>
+                                    <p style="color: {MODERN_COLORS['text_secondary']}; margin: 0 0 1rem 0; font-size: 0.95rem;">
+                                        <strong style="color: {MODERN_COLORS['text_primary']};">Overall Impact:</strong> 
+                                        <span style="color: {MODERN_COLORS['primary_orange']}; font-weight: 600;">{impact['overall_impact']}</span>
+                                    </p>
                                 </div>
                                 """, unsafe_allow_html=True)
                                 
                                 # Create tabs for Summary and Full Publication
-                                tab_summary, tab_full = st.tabs(["📊 Summary", "📄 Full Publication"])
+                                tab_summary, tab_full = st.tabs(["Summary", "Full Publication"])
                                 
                                 with tab_summary:
                                     # Show sector-specific impacts
@@ -1509,15 +1972,14 @@ def main():
                                             
                                             col1, col2 = st.columns([1, 3])
                                             with col1:
-                                                impact_color = {
-                                                    'High': GT_COLORS['error_red'],
-                                                    'Medium': GT_COLORS['warning_yellow'],
-                                                    'Low': GT_COLORS['success_green']
-                                                }.get(details['impact_level'], GT_COLORS['medium_gray'])
+                                                impact_class = {
+                                                    'High': 'impact-high',
+                                                    'Medium': 'impact-medium',
+                                                    'Low': 'impact-low'
+                                                }.get(details['impact_level'], 'impact-medium')
                                                 
                                                 st.markdown(f"""
-                                                <div style="background: {impact_color}; color: white; 
-                                                            padding: 0.5rem; border-radius: 8px; text-align: center;">
+                                                <div class="{impact_class}">
                                                     {details['impact_level']} Impact
                                                 </div>
                                                 """, unsafe_allow_html=True)
@@ -1535,27 +1997,27 @@ def main():
                                                 if details.get('actions_required'):
                                                     st.markdown("**Actions Required:**")
                                                     for action in details.get('actions_required', [])[:3]:
-                                                        st.info(f"✓ {action}")
+                                                        st.info(f"🔧 {action}")
                                     
                                     # Cross-sector requirements
                                     if impact.get('cross_sector_requirements'):
                                         st.markdown("---")
-                                        st.markdown("**🔗 Cross-Sector Requirements:**")
+                                        st.markdown("**Cross-Sector Requirements:**")
                                         for req in impact['cross_sector_requirements'][:3]:
                                             st.write(f"• {req}")
                                     
                                     # Implementation complexity
                                     st.markdown("---")
-                                    complexity_color = {
-                                        'High': GT_COLORS['error_red'],
-                                        'Medium': GT_COLORS['warning_yellow'],
-                                        'Low': GT_COLORS['success_green']
-                                    }.get(impact.get('implementation_complexity', 'Medium'), GT_COLORS['medium_gray'])
+                                    complexity_class = {
+                                        'High': 'impact-high',
+                                        'Medium': 'impact-medium', 
+                                        'Low': 'impact-low'
+                                    }.get(impact.get('implementation_complexity', 'Medium'), 'impact-medium')
                                     
                                     st.markdown(f"""
-                                    <div style="background: {GT_COLORS['light_gray']}; padding: 1rem; border-radius: 8px;">
-                                        <strong>Implementation Complexity:</strong> 
-                                        <span style="color: {complexity_color}; font-weight: bold;">
+                                    <div class="metadata-container">
+                                        <strong style="color: {MODERN_COLORS['text_primary']};">Implementation Complexity:</strong> 
+                                        <span class="{complexity_class}" style="margin-left: 0.5rem; display: inline-block;">
                                             {impact.get('implementation_complexity', 'Not specified')}
                                         </span>
                                     </div>
@@ -1577,7 +2039,7 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
                                     """
                                     
                                     st.download_button(
-                                        "📥 Download Compliance Summary",
+                                        "Download Compliance Summary",
                                         summary_text,
                                         file_name=f"{company_name}_{doc['filename'][:20]}_compliance_summary.txt",
                                         mime="text/plain",
@@ -1587,10 +2049,13 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
                                 with tab_full:
                                     # Document metadata
                                     st.markdown(f"""
-                                    <div style="background: {GT_COLORS['light_gray']}; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                                        <strong>Document:</strong> {doc['filename']}<br>
-                                        <strong>Publication Date:</strong> {doc.get('publication_date', pd.NaT).strftime('%B %Y') if pd.notna(doc.get('publication_date')) else 'Unknown'}<br>
-                                        <strong>Document Length:</strong> {len(doc['text'])} characters
+                                    <div class="metadata-container">
+                                        <strong style="color: {MODERN_COLORS['text_primary']};">Document:</strong> 
+                                        <span style="color: {MODERN_COLORS['text_secondary']};">{doc['filename']}</span><br>
+                                        <strong style="color: {MODERN_COLORS['text_primary']};">Publication Date:</strong> 
+                                        <span style="color: {MODERN_COLORS['text_secondary']};">{doc.get('publication_date', pd.NaT).strftime('%B %Y') if pd.notna(doc.get('publication_date')) else 'Unknown'}</span><br>
+                                        <strong style="color: {MODERN_COLORS['text_primary']};">Document Length:</strong> 
+                                        <span style="color: {MODERN_COLORS['text_secondary']};">{len(doc['text'])} characters</span>
                                     </div>
                                     """, unsafe_allow_html=True)
                                     
@@ -1605,7 +2070,7 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
                                     
                                     # Download full document button
                                     st.download_button(
-                                        "📥 Download Full Document",
+                                        "Download Full Document",
                                         doc['text'],
                                         file_name=f"{doc['filename'].replace('/', '_')}.txt",
                                         mime="text/plain",
@@ -1617,10 +2082,10 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
                         st.info("No highly relevant documents found for the specified sectors.")
     
     with tab3:
-        st.markdown("## 🎯 AI Regulatory Tracking")
+        st.markdown("## AI Regulatory Tracking")
         
         track_query = st.text_input(
-            "🔍 Track Regulation/Topic",
+            "Track Regulation/Topic",
             placeholder="e.g., GDPR, AI Act, Sustainability Reporting, Data Protection",
             help="AI will track evolution of this topic across ALL documents in your selected date range"
         )
@@ -1648,23 +2113,23 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
             docs_to_analyze = len(filtered_df)
             if docs_to_analyze > 0:
                 st.info(f"""
-                📊 **Documents to analyze:** {docs_to_analyze:,} documents 
+                **Documents to analyze:** {docs_to_analyze:,} documents 
                 from {filtered_df['publication_date'].min().strftime('%B %Y')} to {filtered_df['publication_date'].max().strftime('%B %Y')}
                 
-                ⏱️ **Estimated time:** {max(1, docs_to_analyze // 50)} - {max(2, docs_to_analyze // 25)} minutes
+                **Estimated time:** {max(1, docs_to_analyze // 50)} - {max(2, docs_to_analyze // 25)} minutes
                 """)
                 
                 # Warning for large datasets
                 if docs_to_analyze > 1000:
                     st.warning("""
-                    ⚠️ **Large Dataset**: Analyzing over 1,000 documents. Consider:
+                    **Large Dataset**: Analyzing over 1,000 documents. Consider:
                     - Narrowing your date range for faster results
                     - Using a higher relevance threshold
                     - This comprehensive analysis will provide the most complete tracking
                     """)
             
-            if st.button("🕵️ Start Comprehensive AI Tracking", type="primary"):
-                with st.spinner(f"🤖 AI tracking '{track_query}' across {docs_to_analyze:,} documents..."):
+            if st.button("Start Comprehensive AI Tracking", type="primary"):
+                with st.spinner(f"AI tracking '{track_query}' across {docs_to_analyze:,} documents..."):
                     
                     tracking_results = []
                     
@@ -1717,7 +2182,7 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
                     status_text.empty()
                     
                     if tracking_results:
-                        st.success(f"🎯 Found {len(tracking_results)} documents related to '{track_query}' out of {docs_to_analyze:,} analyzed")
+                        st.success(f"Found {len(tracking_results)} documents related to '{track_query}' out of {docs_to_analyze:,} analyzed")
                         
                         # Calculate and show coverage statistics
                         coverage_percentage = (len(tracking_results) / docs_to_analyze) * 100
@@ -1740,7 +2205,7 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
                             )
                         
                         # Show comprehensive statistics
-                        st.markdown("### 📊 Comprehensive Tracking Results")
+                        st.markdown("### Comprehensive Tracking Results")
                         
                         col1, col2, col3, col4, col5 = st.columns(5)
                         
@@ -1783,20 +2248,24 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
                                 color='Type',
                                 hover_data=['Document', 'Importance'],
                                 title=f"Complete Evolution of '{track_query}' Across {docs_to_analyze:,} EU Legal Documents",
-                                labels={'Relevance': 'Relevance Score'}
+                                labels={'Relevance': 'Relevance Score'},
+                                color_discrete_sequence=[MODERN_COLORS['primary_orange'], MODERN_COLORS['accent_orange'], 
+                                                       MODERN_COLORS['secondary_peach'], MODERN_COLORS['tertiary_orange']]
                             )
                             
                             fig.update_layout(
                                 height=400,
                                 xaxis_title="Publication Date",
                                 yaxis_title="Relevance Score",
-                                showlegend=True
+                                showlegend=True,
+                                plot_bgcolor='rgba(0,0,0,0)',
+                                paper_bgcolor='rgba(0,0,0,0)'
                             )
                             
                             st.plotly_chart(fig, use_container_width=True)
                             
                             # Temporal distribution
-                            st.markdown("### 📅 Temporal Distribution")
+                            st.markdown("### Temporal Distribution")
                             
                             # Group by year
                             timeline_df['Year'] = timeline_df['Date'].dt.year
@@ -1807,8 +2276,15 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
                                 x='Year',
                                 y='Count',
                                 title=f"'{track_query}' Documents by Year",
-                                labels={'Count': 'Number of Documents'}
+                                labels={'Count': 'Number of Documents'},
+                                color_discrete_sequence=[MODERN_COLORS['primary_orange']]
                             )
+                            
+                            fig2.update_layout(
+                                plot_bgcolor='rgba(0,0,0,0)',
+                                paper_bgcolor='rgba(0,0,0,0)'
+                            )
+                            
                             st.plotly_chart(fig2, use_container_width=True)
                             
                             # Relationship type distribution
@@ -1819,7 +2295,9 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
                                 fig3 = px.pie(
                                     values=type_counts.values,
                                     names=type_counts.index,
-                                    title="Document Relationship Types"
+                                    title="Document Relationship Types",
+                                    color_discrete_sequence=[MODERN_COLORS['primary_orange'], MODERN_COLORS['accent_orange'], 
+                                                           MODERN_COLORS['secondary_peach'], MODERN_COLORS['tertiary_orange']]
                                 )
                                 st.plotly_chart(fig3, use_container_width=True)
                             
@@ -1830,15 +2308,15 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
                                     names=importance_counts.index,
                                     title="Importance Distribution",
                                     color_discrete_map={
-                                        'High': '#E74C3C',
-                                        'Medium': '#F39C12',
-                                        'Low': '#27AE60'
+                                        'High': MODERN_COLORS['error_red'],
+                                        'Medium': MODERN_COLORS['warning_amber'],
+                                        'Low': MODERN_COLORS['success_green']
                                     }
                                 )
                                 st.plotly_chart(fig4, use_container_width=True)
                         
                         # Show detailed results
-                        st.markdown("### 📄 Detailed Document Analysis")
+                        st.markdown("### Detailed Document Analysis")
                         
                         # Add filter for relationship type
                         selected_types = st.multiselect(
@@ -1869,6 +2347,7 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
                             st.markdown(f"Showing documents {start_idx + 1} to {end_idx} of {len(tracking_results)}")
                         else:
                             displayed_results = tracking_results
+                            page = 1
                         
                         # Apply type filter if selected
                         if selected_types:
@@ -1881,22 +2360,25 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
                             
                             # Color code by importance
                             border_color = {
-                                'High': GT_COLORS['error_red'],
-                                'Medium': GT_COLORS['warning_yellow'],
-                                'Low': GT_COLORS['success_green']
-                            }.get(analysis.get('importance', 'Medium'), GT_COLORS['medium_gray'])
+                                'High': MODERN_COLORS['error_red'],
+                                'Medium': MODERN_COLORS['warning_amber'],
+                                'Low': MODERN_COLORS['success_green']
+                            }.get(analysis.get('importance', 'Medium'), MODERN_COLORS['primary_orange'])
                             
                             st.markdown(f"""
                             <div class="document-card" style="border-left-color: {border_color};">
                                 <div style="display: flex; justify-content: space-between; align-items: start;">
                                     <div style="flex-grow: 1;">
-                                        <h4 style="color: {GT_COLORS['primary_purple']}; margin: 0;">
-                                            📄 {doc['filename'][:80]}...
+                                        <h4 style="color: {MODERN_COLORS['primary_orange']}; margin: 0; font-weight: 600; font-size: 1.2rem;">
+                                            {doc['filename'][:80]}...
                                         </h4>
-                                        <p style="color: {GT_COLORS['medium_gray']}; margin: 0.5rem 0;">
-                                            <strong>Date:</strong> {doc['publication_date'].strftime('%B %Y')} | 
-                                            <strong>Type:</strong> {analysis.get('relationship_type', 'Unknown')} |
-                                            <strong>Importance:</strong> <span style="color: {border_color};">{analysis.get('importance', 'Unknown')}</span>
+                                        <p style="color: {MODERN_COLORS['text_secondary']}; margin: 0.75rem 0; font-size: 0.95rem; line-height: 1.5;">
+                                            <strong style="color: {MODERN_COLORS['text_primary']};">Date:</strong> {doc['publication_date'].strftime('%B %Y')} | 
+                                            <strong style="color: {MODERN_COLORS['text_primary']};">Type:</strong> {analysis.get('relationship_type', 'Unknown')} |
+                                            <strong style="color: {MODERN_COLORS['text_primary']};">Importance:</strong> 
+                                            <span style="background: {border_color}; color: white; 
+                                                         padding: 0.3rem 0.6rem; border-radius: 12px; 
+                                                         font-size: 0.85rem; font-weight: 600;">{analysis.get('importance', 'Unknown')}</span>
                                         </p>
                                     </div>
                                     <div>
@@ -1909,7 +2391,7 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
                             """, unsafe_allow_html=True)
                             
                             # Create tabs for Summary and Full Publication
-                            track_tab_summary, track_tab_full = st.tabs(["📊 Tracking Summary", "📄 Full Publication"])
+                            track_tab_summary, track_tab_full = st.tabs(["Tracking Summary", "Full Publication"])
                             
                             with track_tab_summary:
                                 # Related concepts
@@ -1922,24 +2404,24 @@ Implementation Complexity: {impact.get('implementation_complexity', 'Not specifi
                                 if analysis.get('specific_mentions'):
                                     st.markdown("**Specific Mentions:**")
                                     for mention in analysis.get('specific_mentions', [])[:2]:
-                                        st.info(f"💬 {mention}")
+                                        st.info(f"📝 Quote: {mention}")
                                 
                                 # Evolution indicators
                                 if analysis.get('evolution_indicators'):
                                     st.markdown("**Evolution Indicators:**")
                                     for indicator in analysis.get('evolution_indicators', [])[:2]:
-                                        st.write(f"📈 {indicator}")
+                                        st.write(f"📈 Indicator: {indicator}")
                                 
                                 # Temporal references
                                 if analysis.get('temporal_references'):
                                     st.markdown("**Temporal References:**")
                                     for ref in analysis.get('temporal_references', [])[:2]:
-                                        st.warning(f"📅 {ref}")
+                                        st.warning(f"📅 Date Reference: {ref}")
                                 
                                 # Analysis actions
                                 col1, col2 = st.columns(2)
                                 with col1:
-                                    if st.button(f"🔬 Full Analysis", key=f"track_analyze_{idx}_{page if len(tracking_results) > 20 else ''}"):
+                                    if st.button(f"Full Analysis", key=f"track_analyze_{idx}_{page}"):
                                         with st.spinner("Generating comprehensive analysis..."):
                                             full_analysis = ai_analyzer.comprehensive_document_analysis(doc['text'])
                                             display_detailed_analysis(doc, full_analysis, ai_analyzer)
@@ -1967,21 +2449,25 @@ EVOLUTION INDICATORS:
                                     """
                                     
                                     st.download_button(
-                                        "📥 Download Summary",
+                                        "Download Summary",
                                         tracking_summary,
                                         file_name=f"{track_query}_{doc['filename'][:20]}_tracking_summary.txt",
                                         mime="text/plain",
-                                        key=f"download_track_summary_{idx}_{page if len(tracking_results) > 20 else ''}"
+                                        key=f"download_track_summary_{idx}_{page}"
                                     )
                             
                             with track_tab_full:
                                 # Document metadata
                                 st.markdown(f"""
-                                <div style="background: {GT_COLORS['light_gray']}; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
-                                    <strong>Document:</strong> {doc['filename']}<br>
-                                    <strong>Publication Date:</strong> {doc['publication_date'].strftime('%B %Y')}<br>
-                                    <strong>Relevance to "{track_query}":</strong> {analysis['relevance_score']:.0%}<br>
-                                    <strong>Document Length:</strong> {len(doc['text'])} characters
+                                <div class="metadata-container">
+                                    <strong style="color: {MODERN_COLORS['text_primary']};">Document:</strong> 
+                                    <span style="color: {MODERN_COLORS['text_secondary']};">{doc['filename']}</span><br>
+                                    <strong style="color: {MODERN_COLORS['text_primary']};">Publication Date:</strong> 
+                                    <span style="color: {MODERN_COLORS['text_secondary']};">{doc['publication_date'].strftime('%B %Y')}</span><br>
+                                    <strong style="color: {MODERN_COLORS['text_primary']};">Relevance to "{track_query}":</strong> 
+                                    <span style="color: {MODERN_COLORS['primary_orange']}; font-weight: 600;">{analysis['relevance_score']:.0%}</span><br>
+                                    <strong style="color: {MODERN_COLORS['text_primary']};">Document Length:</strong> 
+                                    <span style="color: {MODERN_COLORS['text_secondary']};">{len(doc['text'])} characters</span>
                                 </div>
                                 """, unsafe_allow_html=True)
                                 
@@ -1991,23 +2477,23 @@ EVOLUTION INDICATORS:
                                     doc['text'],
                                     height=600,
                                     disabled=True,
-                                    key=f"full_text_track_{idx}_{page if len(tracking_results) > 20 else ''}"
+                                    key=f"full_text_track_{idx}_{page}"
                                 )
                                 
                                 # Download full document
                                 st.download_button(
-                                    "📥 Download Full Document",
+                                    "Download Full Document",
                                     doc['text'],
                                     file_name=f"{doc['filename'].replace('/', '_')}.txt",
                                     mime="text/plain",
-                                    key=f"download_full_track_{idx}_{page if len(tracking_results) > 20 else ''}"
+                                    key=f"download_full_track_{idx}_{page}"
                                 )
                             
                             st.markdown("---")  # Separator between documents
                         
                         # Export all results option
                         if len(tracking_results) > 0:
-                            st.markdown("### 📥 Export Options")
+                            st.markdown("### Export Options")
                             
                             col1, col2 = st.columns(2)
                             
@@ -2027,7 +2513,7 @@ EVOLUTION INDICATORS:
                                 csv = summary_df.to_csv(index=False)
                                 
                                 st.download_button(
-                                    "📊 Download Results CSV",
+                                    "Download Results CSV",
                                     csv,
                                     file_name=f"{track_query}_tracking_results_{datetime.now().strftime('%Y%m%d')}.csv",
                                     mime="text/csv"
@@ -2069,7 +2555,7 @@ DETAILED RESULTS:
 """
                                 
                                 st.download_button(
-                                    "📄 Download Full Report",
+                                    "Download Full Report",
                                     report,
                                     file_name=f"{track_query}_comprehensive_report_{datetime.now().strftime('%Y%m%d')}.txt",
                                     mime="text/plain"
@@ -2077,7 +2563,7 @@ DETAILED RESULTS:
                     
                     else:
                         st.warning(f"""
-                        🔍 No documents found related to '{track_query}' with threshold {threshold:.0%}
+                        No documents found related to '{track_query}' with threshold {threshold:.0%}
                         
                         **Analysis Complete:**
                         - Analyzed {docs_to_analyze:,} documents
@@ -2091,7 +2577,7 @@ DETAILED RESULTS:
                         - Using related terms (e.g., "data protection" instead of "GDPR")
                         """)
             else:
-                st.info("👆 Enter a regulation or topic to track its evolution across the entire dataset")
+                st.info("Enter a regulation or topic to track its evolution across the entire dataset")
 
 if __name__ == "__main__":
     main()
